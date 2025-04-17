@@ -1,0 +1,58 @@
+import java.lang.Override
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class voto {
+    int id;
+    int votanteID;
+    int candidatoID;
+    int timestamp;
+    public voto(int id, int votanteID, int candidatoID, int timestamp){
+        this.id = id;
+        this.votanteID = votanteID;
+        this.candidatoID = candidatoID;
+        this.timestamp = timestamp;
+    }
+
+    public int getID(){
+        return id;
+    }
+    public int getVotanteID(){
+        return votanteID;
+    }
+    public int getCandidatoID(){
+        return candidatoID;
+    }
+    public int getTimestamp(){
+        return timestamp;
+    }
+
+    public void setID(int id){
+        this.id = id;
+    }
+    public void setVotanteID(int votanteID){
+        this.votanteID = votanteID;
+    }
+    public void setCandidatoID(int candidatoID){
+        this.candidatoID = candidatoID;
+    }
+    public void setTimestamp(int timestamp){
+        this.timestamp = timestamp;
+    }
+}
+public class candidato extends voto{
+    String nombre;
+    String partido;
+    public candidato(int id){
+        super(id);
+    }
+
+    Queue<voto> Votosrecibidos = new LinkedList<voto>();
+
+
+
+    @Override
+
+
+}
+
