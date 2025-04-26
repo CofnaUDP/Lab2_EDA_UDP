@@ -1,0 +1,196 @@
+import java.util.*;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
+public class UrnaElectoral {
+    private static int idVotanteContador = 10000;
+    private static int idCandidatoContador = 1;
+
+
+    public static class Candidato {
+        private int id;
+        private String nombre;
+        private String partido;
+        private Queue<Voto> votos;
+
+        public Candidato(String nombre, String partido) {
+            this.id = idCandidatoContador++;
+            this.nombre = nombre;
+            this.partido = partido;
+            this.votos = new LinkedList<>();
+        }
+        public int getId() { return id; }
+        public String getNombre() { return nombre; }
+        public String getPartido() { return partido; }
+        public int getTotalVotos() { return votos.size(); }
+
+        public void agregarVoto(Voto voto) {
+            votos.add(voto);
+        }
+    }
+
+    public static class Votante {
+        private int id;
+        private String nombre;
+        private boolean yaVoto;
+
+        public Votante(String nombre, int id) {
+            this.nombre = nombre;
+            this.id = id;
+            this.yaVoto = false;
+        }
+        public int getId() { return id; }
+        public String getNombre() { return nombre; }
+        public boolean yaVoto() { return yaVoto; }
+
+        public void marcarComoVotado() {
+            this.yaVoto = true;
+        }
+    }
+
+    public static class Voto {
+        private int id;
+        private int idVotante;
+        private int idCandidato;
+        private String timestamp;
+
+        public Voto(int idVotante, int idCandidato) {
+            this.id = idVotanteContador++;
+            this.idVotante = idVotante;
+            this.idCandidato = idCandidato;
+            this.timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        }
+        public int getId() { return id; }
+        public String getTimestamp() { return timestamp; }
+    }
+    private static class NodeCandidato {
+        Candidato candidato;
+        NodeCandidato siguiente;
+
+        public NodeCandidato(Candidato candidato) {
+            this.candidato = candidato;
+            this.siguiente = null;
+        }
+    }
+
+    private NodeCandidato listaCandidatos;
+    private Stack<Voto> historialVotos;
+    private Queue<Voto> votosReportados;
+
+    public UrnaElectoral() {
+        listaCandidatos = null;
+        historialVotos = new Stack<>();
+        votosReportados = new LinkedList<>();
+    }
+    public void agregarCandidato(Candidato candidato) {
+        NodeCandidato nuevo = new NodeCandidato(candidato);
+        if (listaCandidatos == null) {
+            listaCandidatos = nuevo;
+        } else {
+            NodeCandidato temp = listaCandidatos;
+            while (temp.siguiente != null) {
+                if (temp.candidato.getId() == candidato.getId()) {
+                    System.out.println("¡El candidato ya existe!");
+                    return;
+                }
+                temp = temp.siguiente;
+            }
+            temp.siguiente = nuevo;
+        }
+    }
+
+    public boolean registrarVoto(Votante votante, int idCandidato) {
+        if (votante.yaVoto()) {
+            System.out.println("¡" + votante.getNombre() + " ya votó!");
+            return false;
+        }
+
+        Candidato candidato = buscarCandidato(idCandidato);
+        if (candidato == null) {
+            System.out.println("Candidato no encontrado");
+            return false;
+        }
+
+        Voto nuevoVoto = new Voto(votante.getId(), idCandidato);
+        historialVotos.push(nuevoVoto);
+        candidato.agregarVoto(nuevoVoto);
+        votante.marcarComoVotado();
+        System.out.println("Voto registrado a las " + nuevoVoto.getTimestamp());
+        return true;
+    }
+
+    public Candidato buscarCandidato(int id) {
+        NodeCandidato temp = listaCandidatos;
+        while (temp != null) {
+            if (temp.candidato.getId() == id) {
+                return temp.candidato;
+            }
+            temp = temp.siguiente;
+        }
+        return null;
+    }
+
+    public void ListaCompleta() {
+        System.out.println("Lista de los candidatos:");
+        NodeCandidato temp = listaCandidatos;
+        while (temp != null) {
+            Candidato c = temp.candidato;
+            System.out.println(c.getNombre() + " (" + c.getPartido() + "): " + 
+                              c.getTotalVotos() + " votos");
+            temp = temp.siguiente;
+        }
+    }
+    public static void main(String[] args) {
+        UrnaElectoral urna = new UrnaElectoral();
+        Scanner sc = new Scanner(System.in);
+        boolean ejecutando = true;
+
+        while (ejecutando) {
+            System.out.println("Seleccione una opcion para la votación");
+            System.out.println("1. Añadir candidato");
+            System.out.println("2. Registrar voto");
+            System.out.println("3. Lista de candidatos actual");
+            System.out.println("4. Salir");
+            System.out.print("Seleccione una opción: ");
+            
+            int opcion = sc.nextInt();
+            sc.nextLine(); 
+
+            switch (opcion) {
+                case 1:
+                    System.out.print("Nombre del candidato: ");
+                    String nombre = sc.nextLine();
+                    System.out.print("Partido: ");
+                    String partido = sc.nextLine();
+                    urna.agregarCandidato(new Candidato(nombre, partido));
+                    System.out.println("Candidato agregado exitosamente");
+                    break;
+
+                case 2:
+                    System.out.print("Nombre del votante: ");
+                    String nomVotante = sc.nextLine();
+                    System.out.print("ID del votante: ");
+                    int idVotante = sc.nextInt();
+                    System.out.print("ID del candidato: ");
+                    int idCandidato = sc.nextInt();
+                    
+                    Votante votante = new Votante(nomVotante, idVotante);
+                    urna.registrarVoto(votante, idCandidato);
+                    break;
+
+                case 3:
+                    urna.ListaCompleta();
+                    break;
+
+                case 4:
+                    ejecutando = false;
+                    System.out.println("Cerrando...");
+                    break;
+
+                default:
+                    System.out.println("");
+            }
+        }
+        sc.close();
+    }
+}
